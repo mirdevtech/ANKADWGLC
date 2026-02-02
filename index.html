@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AnKA DwGLC v1.0 - Kontrol Paneli</title>
+<script src="https://unpkg.com/mqtt@4.3.7/dist/mqtt.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 20px;
+    min-height: 100vh;
+  }
+  
+  .header {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+    text-align: center;
+  }
+  
+  .header h1 {
+    color: #333;
+    font-size: 1.8em;
+    margin-bottom: 5px;
+  }
+  
+  .header p {
+    color: #666;
+    font-size: 0.9em;
+  }
+  
+  .status-bar {
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+  }
+  
+  .status-badge {
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 0.85em;
+  }
+  
+  .status-connected {
+    background: #d4edda;
+    color: #155724;
+  }
+  
+  .status-disconnected {
+    background: #f8d7da;
+    color: #721c24;
+  }
+  
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .card {
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+  }
+  
+  .card-title {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #eee;
+  }
+  
+  .relay-group, .ssr-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .io-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 8px;
+  }
+  
+  .io-label {
+    font-weight: bold;
+    color: #495057;
+  }
+  
+  .toggle-btn {
+    padding: 8px 20px;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s;
+    font-size: 0.9em;
+  }
+  
+  .toggle-btn.on {
+    background: #28a745;
+    color: white;
+  }
+  
+  .toggle-btn.off {
+    background: #dc3545;
+    color: white;
+  }
+  
+  .toggle-btn:active {
+    transform: scale(0.95);
+  }
+  
+  .toggle-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  .input-status {
+    padding: 5px 15px;
+    border-radius: 15px;
+    font-weight: bold;
+    font-size: 0.85em;
+  }
+  
+  .input-high {
+    background: #d4edda;
+    color: #155724;
+  }
+  
+  .input-low {
+    background: #f8d7da;
+    color: #721c24;
+  }
+  
+  .analog-display {
+    text-align: center;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 10px;
+    color: white;
+  }
+  
+  .analog-value {
+    font-size: 2.5em;
+    font-weight: bold;
+    font-family: monospace;
+  }
+  
+  .analog-unit {
+    font-size: 1em;
+    opacity: 0.8;
+  }
+  
+  .slider-container {
+    margin-top: 15px;
+  }
+  
+  .slider {
+    width: 100%;
+    height: 8px;
+    border-radius: 5px;
+    background: #ddd;
+    outline: none;
+    -webkit-appearance: none;
+  }
+  
+  .slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #667eea;
+    cursor: pointer;
+  }
+  
+  .slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #667eea;
+    cursor: pointer;
+  }
+  
+  .temp-display {
+    text-align: center;
+    padding: 20px;
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    border-radius: 10px;
+    color: white;
+  }
+  
+  .temp-value {
+    font-size: 2.5em;
+    font-weight: bold;
+    font-family: monospace;
+  }
+  
+  .footer {
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+    margin-top: 20px;
+    box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+    font-size: 0.85em;
+    color: #666;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🔌 AnKA DwGLC v1.0</h1>
+  <p>MiRDEV Otomasyon & Teknoloji Yazılımları | CE: CE/250813</p>
+</div>
+
+<div class="status-bar">
+  <div id="web-status" class="status-badge status-disconnected">Web: Bağlanıyor...</div>
+  <div id="anka-status" class="status-badge status-disconnected">AnKA: Offline</div>
+</div>
+
+<div class="grid">
+  <!-- 5 RÖLE ÇIKIŞI -->
+  <div class="card">
+    <div class="card-title">⚡ Röle Çıkışları (5x)</div>
+    <div class="relay-group" id="relay-group"></div>
+  </div>
+  
+  <!-- 2 SSR ÇIKIŞI -->
+  <div class="card">
+    <div class="card-title">🔥 SSR Çıkışları (2x)</div>
+    <div class="ssr-group" id="ssr-group"></div>
+  </div>
+  
+  <!-- 8 DİJİTAL GİRİŞ -->
+  <div class="card">
+    <div class="card-title">📥 Dijital Girişler (8x)</div>
+    <div class="relay-group" id="input-group"></div>
+  </div>
+  
+  <!-- 0-10V GİRİŞ -->
+  <div class="card">
+    <div class="card-title">📊 Analog Giriş (0-10V)</div>
+    <div class="analog-display">
+      <div class="analog-value" id="analog-in-value">0.00</div>
+      <div class="analog-unit">Volt</div>
+    </div>
+  </div>
+  
+  <!-- 0-10V ÇIKIŞ -->
+  <div class="card">
+    <div class="card-title">📤 Analog Çıkış (0-10V)</div>
+    <div class="analog-display">
+      <div class="analog-value" id="analog-out-value">0.00</div>
+      <div class="analog-unit">Volt</div>
+    </div>
+    <div class="slider-container">
+      <input type="range" min="0" max="1000" value="0" class="slider" id="analog-out-slider">
+    </div>
+  </div>
+  
+  <!-- NTC SICAKLIK -->
+  <div class="card">
+    <div class="card-title">🌡️ NTC Sıcaklık Sensörü</div>
+    <div class="temp-display">
+      <div class="temp-value" id="ntc-temp">--</div>
+      <div class="analog-unit">°C</div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <p>🔒 HiveMQ Cloud TLS Bağlantısı | 🔄 Otomatik Güncelleme Aktif</p>
+  <p>AnKA DwGLC v1.0 - Raspberry Pi Pico 2W</p>
+</div>
+
+<script>
+// MQTT Ayarları
+const MQTT_BROKER = 'wss://4c45e5b50e51467e855e3a8f59db30b2.s1.eu.hivemq.cloud:8884/mqtt';
+const MQTT_USER = 'ANKAGLC';
+const MQTT_PASS = 'Argemirdev7';
+
+// Topics
+const TOPIC_RELAY_COMMAND = 'anka/relay/command';
+const TOPIC_RELAY_STATUS = 'anka/relay/status';
+const TOPIC_SSR_COMMAND = 'anka/ssr/command';
+const TOPIC_SSR_STATUS = 'anka/ssr/status';
+const TOPIC_DIGITAL_INPUT = 'anka/input/status';
+const TOPIC_ANALOG_IN = 'anka/analogin/status';
+const TOPIC_ANALOG_OUT_COMMAND = 'anka/analogout/command';
+const TOPIC_ANALOG_OUT_STATUS = 'anka/analogout/status';
+const TOPIC_NTC = 'anka/ntc/status';
+const TOPIC_HEARTBEAT = 'anka/heartbeat';
+
+let client = null;
+let lastHeartbeat = 0;
+let heartbeatReceived = false;
+let ankaOnlineCheckInterval = null;
+let ankaHeartbeatCounter=0;
+let firstTime=true;//ilk giriş mi 
+
+// MQTT Bağlantı
+function connectMQTT() {
+  console.log('MQTT bağlanıyor...');
+  
+  const clientId = 'anka_web_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+  
+  client = mqtt.connect(MQTT_BROKER, {
+    clientId: clientId,
+    username: MQTT_USER,
+    password: MQTT_PASS
+  });
+  
+  client.on('connect', function() {
+    console.log('MQTT bağlandı!');
+    updateWebStatus(true);
+    
+    // Subscribe
+    //client.subscribe(TOPIC_RELAY_STATUS);
+    //client.subscribe(TOPIC_SSR_STATUS);
+    //client.subscribe(TOPIC_DIGITAL_INPUT);
+    //client.subscribe(TOPIC_ANALOG_IN);
+    //client.subscribe(TOPIC_ANALOG_OUT_STATUS);
+    //client.subscribe(TOPIC_NTC);
+    //client.subscribe(TOPIC_HEARTBEAT);
+
+    client.subscribe(TOPIC_RELAY_STATUS, function(err) {if (!err) {console.log('TOPIC_RELAY_STATUS konusuna abone olundu');}});
+    if (ankaOnlineCheckInterval) {clearInterval(ankaOnlineCheckInterval);}    // sayfa tekrar yüklendiğinde başka intervaller oluşmasın diye..
+    ankaOnlineCheckInterval = setInterval(checkAnkaOnline,1000);
+    
+  });
+  
+  client.on('message', function(topic, message) {
+    const msg = message.toString();
+    console.log('Mesaj:', topic, msg);
+    
+    if (topic === TOPIC_RELAY_STATUS) {
+      updateRelayStatus(msg);
+    } else if (topic === TOPIC_SSR_STATUS) {
+      updateSSRStatus(msg);
+    } else if (topic === TOPIC_DIGITAL_INPUT) {
+      updateDigitalInputs(msg);
+    } else if (topic === TOPIC_ANALOG_IN) {
+      updateAnalogInput(msg);
+    } else if (topic === TOPIC_ANALOG_OUT_STATUS) {
+      updateAnalogOutput(msg);
+    } else if (topic === TOPIC_NTC) {
+      picoHeartbeatCounter=0;//veri geldiğini anlıyoruz yani pico online!!!
+      if(firstTime) firstTime=false;
+      else updateAnkaStatus(true);//ilk girişte yazmayacak retain mesaj olduğu için anka glc aktif yazacak.
+      updateNTC(msg);
+    } 
+  });
+  
+  client.on('error', function(error) {console.error('MQTT hatası:', error);updateWebStatus(false);}); 
+  client.on('close', function() {console.log('MQTT bağlantısı kapandı');updateWebStatus(false);setTimeout(connectMQTT, 3000);});
+}
+
+
+// Anka check
+function checkAnkaOnline() {
+ ankaHeartbeatCounter++;
+  if(ankaHeartbeatCounter==3){ankaHeartbeatCounter=0;updateAnkaStatus(false);} // 3 saniyeden boyunca veri gelmediyse offline
+}
+// Anka check
+
+// Durum Güncellemeleri
+function updateWebStatus(connected) {
+  const el = document.getElementById('web-status');
+  if (connected) {
+    el.textContent = 'Web: Bağlı ✅';
+    el.className = 'status-badge status-connected';
+  } else {
+    el.textContent = 'Web: Bağlantı Yok ❌';
+    el.className = 'status-badge status-disconnected';
+  }
+}
+
+function updateAnkaStatus(online) {
+  const el = document.getElementById('anka-status');
+  if (online) {
+    el.textContent = 'AnKA: Online ✅';
+    el.className = 'status-badge status-connected';
+  } else {
+    el.textContent = 'AnKA: Offline ❌';
+    el.className = 'status-badge status-disconnected';
+  }
+}
+
+function checkHeartbeat() {
+  if (!heartbeatReceived) {
+    updateAnkaStatus(false);
+    return;
+  }
+  
+  const now = Date.now();
+  if ((now - lastHeartbeat) / 1000 > 5) {
+    updateAnkaStatus(false);
+  } else {
+    updateAnkaStatus(true);
+  }
+}
+
+// Röle Durumu Güncelle
+function updateRelayStatus(msg) {
+  const states = msg.split(',');
+  states.forEach((state, index) => {
+    const btn = document.getElementById(`relay-${index}`);
+    if (btn) {
+      if (state === '1') {
+        btn.textContent = 'AÇIK';
+        btn.className = 'toggle-btn on';
+      } else {
+        btn.textContent = 'KAPALI';
+        btn.className = 'toggle-btn off';
+      }
+    }
+  });
+}
+
+// SSR Durumu Güncelle
+function updateSSRStatus(msg) {
+  const states = msg.split(',');
+  states.forEach((state, index) => {
+    const btn = document.getElementById(`ssr-${index}`);
+    if (btn) {
+      if (state === '1') {
+        btn.textContent = 'AÇIK';
+        btn.className = 'toggle-btn on';
+      } else {
+        btn.textContent = 'KAPALI';
+        btn.className = 'toggle-btn off';
+      }
+    }
+  });
+}
+
+// Dijital Giriş Güncelle
+function updateDigitalInputs(msg) {
+  const states = msg.split(',');
+  states.forEach((state, index) => {
+    const el = document.getElementById(`input-${index}`);
+    if (el) {
+      if (state === '1') {
+        el.textContent = 'HIGH';
+        el.className = 'input-status input-high';
+      } else {
+        el.textContent = 'LOW';
+        el.className = 'input-status input-low';
+      }
+    }
+  });
+}
+
+// Analog Giriş Güncelle
+function updateAnalogInput(voltage) {
+  document.getElementById('analog-in-value').textContent = parseFloat(voltage).toFixed(2);
+}
+
+// Analog Çıkış Güncelle
+function updateAnalogOutput(voltage) {
+  const val = parseFloat(voltage);
+  document.getElementById('analog-out-value').textContent = val.toFixed(2);
+  document.getElementById('analog-out-slider').value = val * 100;
+}
+
+// NTC Güncelle
+function updateNTC(temp) {
+  document.getElementById('ntc-temp').textContent = parseFloat(temp).toFixed(1);
+}
+
+// Komut Gönderme
+function toggleRelay(relayNo) {
+  const btn = document.getElementById(`relay-${relayNo}`);
+  const currentState = btn.classList.contains('on') ? 1 : 0;
+  const newState = currentState === 1 ? 0 : 1;
+  
+  const command = `${relayNo},${newState}`;
+  //client.publish(TOPIC_RELAY_COMMAND, command, { retain: false });
+  if (client && client.connected) {
+    client.publish(TOPIC_RELAY_COMMAND,command, { retain: true }, function(err) {
+      if (err) {console.error('Gönderim hatası:', err);} 
+      else {console.log('Gönderildi (retained):',TOPIC_RELAY_COMMAND,command);}
+    });
+   } 
+   else {alert('MQTT bağlantısı yok!');}
+}
+
+function toggleSSR(ssrNo) {
+  const btn = document.getElementById(`ssr-${ssrNo}`);
+  const currentState = btn.classList.contains('on') ? 1 : 0;
+  const newState = currentState === 1 ? 0 : 1;
+  
+  const command = `${ssrNo},${newState}`;
+  client.publish(TOPIC_SSR_COMMAND, command, { retain: false });
+  console.log('SSR komutu:', command);
+}
+
+function setAnalogOutput(value) {
+  const voltage = (value / 100).toFixed(2);
+  client.publish(TOPIC_ANALOG_OUT_COMMAND, voltage, { retain: false });
+  document.getElementById('analog-out-value').textContent = voltage;
+}
+
+// UI Oluşturma
+function createRelays() {
+  const group = document.getElementById('relay-group');
+  for (let i = 0; i < 5; i++) {
+    const item = document.createElement('div');
+    item.className = 'io-item';
+    item.innerHTML = `
+      <span class="io-label">Röle ${i}</span>
+      <button id="relay-${i}" class="toggle-btn off" onclick="toggleRelay(${i})">KAPALI</button>
+    `;
+    group.appendChild(item);
+  }
+}
+
+function createSSRs() {
+  const group = document.getElementById('ssr-group');
+  for (let i = 0; i < 2; i++) {
+    const item = document.createElement('div');
+    item.className = 'io-item';
+    item.innerHTML = `
+      <span class="io-label">SSR ${i}</span>
+      <button id="ssr-${i}" class="toggle-btn off" onclick="toggleSSR(${i})">KAPALI</button>
+    `;
+    group.appendChild(item);
+  }
+}
+
+function createInputs() {
+  const group = document.getElementById('input-group');
+  for (let i = 0; i < 8; i++) {
+    const item = document.createElement('div');
+    item.className = 'io-item';
+    item.innerHTML = `
+      <span class="io-label">Giriş ${i}</span>
+      <span id="input-${i}" class="input-status input-low">LOW</span>
+    `;
+    group.appendChild(item);
+  }
+}
+
+// Başlangıç
+window.addEventListener('load', function() {
+  createRelays();
+  createSSRs();
+  createInputs();
+  
+  // Analog çıkış slider
+  document.getElementById('analog-out-slider').addEventListener('input', function(e) {
+    setAnalogOutput(e.target.value);
+  });
+  
+  // MQTT bağlan
+  connectMQTT();
+  
+ 
+});
+
+document.addEventListener('visibilitychange', function() {if (!document.hidden) {location.reload();}});
+</script>
+
+</body>
+</html>

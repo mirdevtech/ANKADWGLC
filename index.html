@@ -408,19 +408,7 @@ function updateAnkaStatus(online) {
   }
 }
 
-function checkHeartbeat() {
-  if (!heartbeatReceived) {
-    updateAnkaStatus(false);
-    return;
-  }
-  
-  const now = Date.now();
-  if ((now - lastHeartbeat) / 1000 > 5) {
-    updateAnkaStatus(false);
-  } else {
-    updateAnkaStatus(true);
-  }
-}
+
 
 // Röle Durumu Güncelle
 function updateRelayStatus(msg) {
@@ -586,4 +574,5 @@ document.addEventListener('visibilitychange', function() {if (!document.hidden) 
 </body>
 
 </html>
+
 

@@ -366,7 +366,7 @@ function connectMQTT() {
     } else if (topic === TOPIC_ANALOG_OUT_STATUS) {
       updateAnalogOutput(msg);
     } else if (topic === TOPIC_NTC) {
-      picoHeartbeatCounter=0;//veri geldiğini anlıyoruz yani pico online!!!
+      ankaHeartbeatCounter=0;//veri geldiğini anlıyoruz yani pico online!!!
       if(firstTime) firstTime=false;
       else updateAnkaStatus(true);//ilk girişte yazmayacak retain mesaj olduğu için anka glc aktif yazacak.
       updateNTC(msg);
@@ -574,5 +574,6 @@ document.addEventListener('visibilitychange', function() {if (!document.hidden) 
 </body>
 
 </html>
+
 
 

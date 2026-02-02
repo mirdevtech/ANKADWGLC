@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AnKA DwGLC v1.0 - Kontrol Paneli</title>
+<title>AnKA DwGLC Kontrol Paneli</title>
 <script src="https://unpkg.com/mqtt@4.3.7/dist/mqtt.min.js"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -292,7 +292,6 @@
 
 <div class="footer">
   <p>🔒 HiveMQ Cloud</p>
-  <p>AnKA DwGLC v1.0</p>
 </div>
 
 <script>
@@ -336,8 +335,8 @@ function connectMQTT() {
     console.log('MQTT bağlandı!');
     updateWebStatus(true);
     
-    // Subscribe
-    //client.subscribe(TOPIC_SSR_STATUS);
+   
+   
     //client.subscribe(TOPIC_DIGITAL_INPUT);
     //client.subscribe(TOPIC_ANALOG_IN);
     //client.subscribe(TOPIC_ANALOG_OUT_STATUS);
@@ -346,6 +345,7 @@ function connectMQTT() {
 
     client.subscribe(TOPIC_RELAY_STATUS, function(err) {if (!err) {console.log('TOPIC_RELAY_STATUS konusuna abone olundu');}});
     client.subscribe(TOPIC_NTC, function(err) {if (!err) {console.log('TOPIC_NTC konusuna abone olundu');}});
+    client.subscribe(TOPIC_SSR_STATUS, function(err) {if (!err) {console.log('TOPIC_SSR_STATUS konusuna abone olundu');}});
     if (ankaOnlineCheckInterval) {clearInterval(ankaOnlineCheckInterval);}    // sayfa tekrar yüklendiğinde başka intervaller oluşmasın diye..
     ankaOnlineCheckInterval = setInterval(checkAnkaOnline,1000);
     
@@ -574,6 +574,7 @@ document.addEventListener('visibilitychange', function() {if (!document.hidden) 
 </body>
 
 </html>
+
 
 
 

@@ -335,17 +335,13 @@ function connectMQTT() {
     console.log('MQTT bağlandı!');
     updateWebStatus(true);
     
-   
-   
-    //client.subscribe(TOPIC_DIGITAL_INPUT);
-    //client.subscribe(TOPIC_ANALOG_IN);
-    //client.subscribe(TOPIC_ANALOG_OUT_STATUS);
-  
-    
 
     client.subscribe(TOPIC_RELAY_STATUS, function(err) {if (!err) {console.log('TOPIC_RELAY_STATUS konusuna abone olundu');}});
     client.subscribe(TOPIC_NTC, function(err) {if (!err) {console.log('TOPIC_NTC konusuna abone olundu');}});
     client.subscribe(TOPIC_SSR_STATUS, function(err) {if (!err) {console.log('TOPIC_SSR_STATUS konusuna abone olundu');}});
+    client.subscribe(TOPIC_DIGITAL_INPUT, function(err) {if (!err) {console.log('TOPIC_DIGITAL_INPUT konusuna abone olundu');}});
+    client.subscribe(TOPIC_ANALOG_IN, function(err) {if (!err) {console.log('TOPIC_ANALOG_IN konusuna abone olundu');}});
+    client.subscribe(TOPIC_ANALOG_OUT_STATUS, function(err) {if (!err) {console.log('TOPIC_ANALOG_OUT_STATUS konusuna abone olundu');}});
     if (ankaOnlineCheckInterval) {clearInterval(ankaOnlineCheckInterval);}    // sayfa tekrar yüklendiğinde başka intervaller oluşmasın diye..
     ankaOnlineCheckInterval = setInterval(checkAnkaOnline,1000);
     
@@ -574,6 +570,7 @@ document.addEventListener('visibilitychange', function() {if (!document.hidden) 
 </body>
 
 </html>
+
 
 
 

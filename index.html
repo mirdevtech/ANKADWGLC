@@ -232,7 +232,7 @@
 
 <div class="header">
   <h1>🔌 AnKA DwGLC v1.0</h1>
-  <p>MiRDEV Otomasyon & Teknoloji Yazılımları | CE: CE/250813</p>
+  <p>MiRDEV Otomasyon & Teknoloji Yazılımları</p>
 </div>
 
 <div class="status-bar">
@@ -337,15 +337,15 @@ function connectMQTT() {
     updateWebStatus(true);
     
     // Subscribe
-    //client.subscribe(TOPIC_RELAY_STATUS);
     //client.subscribe(TOPIC_SSR_STATUS);
     //client.subscribe(TOPIC_DIGITAL_INPUT);
     //client.subscribe(TOPIC_ANALOG_IN);
     //client.subscribe(TOPIC_ANALOG_OUT_STATUS);
-    //client.subscribe(TOPIC_NTC);
-    //client.subscribe(TOPIC_HEARTBEAT);
+  
+    
 
     client.subscribe(TOPIC_RELAY_STATUS, function(err) {if (!err) {console.log('TOPIC_RELAY_STATUS konusuna abone olundu');}});
+    client.subscribe(TOPIC_NTC, function(err) {if (!err) {console.log('TOPIC_NTC konusuna abone olundu');}});
     if (ankaOnlineCheckInterval) {clearInterval(ankaOnlineCheckInterval);}    // sayfa tekrar yüklendiğinde başka intervaller oluşmasın diye..
     ankaOnlineCheckInterval = setInterval(checkAnkaOnline,1000);
     
@@ -586,3 +586,4 @@ document.addEventListener('visibilitychange', function() {if (!document.hidden) 
 </body>
 
 </html>
+
